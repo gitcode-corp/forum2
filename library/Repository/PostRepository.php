@@ -162,8 +162,10 @@ class PostRepository extends Repository
     
     private function update(Post $post)
     {
+        $isEditedByAdmin = ($post->isEditedByAdmin()) ? 1 : 0;
         $sql = "UPDATE posts SET ";
-        $sql .= "content='" . $this->escapeString($post->getContent()) ."' ";
+        $sql .= "content='" . $this->escapeString($post->getContent()) ."', ";
+        $sql .= "is_edited_by_admin=" . $this->escapeString($isEditedByAdmin) ." ";
         $sql .= "WHERE id =" .$this->escapeString($post->getId());
         
         return $this->_update($sql);

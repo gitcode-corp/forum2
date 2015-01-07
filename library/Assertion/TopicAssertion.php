@@ -22,4 +22,24 @@ class TopicAssertion
         
         return true;
     }
+    
+    public function assertEditTopic(Topic $topic)
+    {        
+        if ($this->guard->isAccessGranted("ROLE_EDIT_ALL_TOPICS")) {
+            return true;
+        }
+        
+        $isClosed = ($topic->isClosed() || $topic->getSection()->isClosed());
+        
+        if (!$isClosed && $topic->getUser()->getId() === AuthUser::getId()) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    public function assertDeleteTopic()
+    {
+        return $this->guard->isAccessGranted("ROLE_DELETE_TOPIC");
+    }
 }

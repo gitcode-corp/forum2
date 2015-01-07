@@ -46,13 +46,9 @@ class PostAssertion
         return $isGranted;
     }
     
-    public function assertDeletePost(Post $post)
+    public function assertDeletePost()
     {
-        if ($this->guard->isAccessGranted("ROLE_DELETE_POST")) {
-            return true;
-        }
-        
-        return false;
+        return $this->guard->isAccessGranted("ROLE_DELETE_POST");
     }
 }
 

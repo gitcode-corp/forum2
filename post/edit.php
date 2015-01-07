@@ -35,6 +35,9 @@ if ($_POST) {
         $user = new User();
         $user->setId(AuthUser::getId());
         
+        if ($guard->isAccessGranted("ROLE_EDIT_ALL_POSTS")) {
+            $post->setIsEditedByAdmin(true);
+        }
         $post->setTopic($topic);
         $post->setUser($user);
         $postRepository = new PostRepository();

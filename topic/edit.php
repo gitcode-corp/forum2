@@ -1,22 +1,21 @@
 <?php
 
 include '/../library/CommonClasses.php';
-require_once '/../library/Repository/SectionRepository.php';
+require_once '/../library/Repository/TopicRepository.php';
 require_once '/../library/Assertion/TopicAssertion.php';
-require_once '/../library/Entity/Topic.php';
 require_once '/../library/Validator/TopicValidator.php';
 
 $sectionId = isset($_GET["sectionId"]) ? (int) $_GET["sectionId"] : 0;
-$sectionRepository = new SectionRepository();
-$section = $sectionRepository->findById($sectionId);
+$topicId = isset($_GET["topicId"]) ? (int) $_GET["topicId"] : 0;
+$topicRepository = new TopicRepository();
+$topic = $topicRepository->findById($topicId, $sectionId);
 
 $topicAssertion = new TopicAssertion();
-if (!$section || !$topicAssertion->assertAddTopic($section)) {
+if (!$topic || !$topicAssertion->assertEditTopic($topic)) {
     include "/../library/Layout/PageNotFound.php";
 }
 
-$topic = new Topic();
-$topic->setSection($section);
+$section = $topic->getSection();
 $errors = array(
     "t_name" => array(),
     "t_description" => array(),
@@ -43,18 +42,13 @@ if ($_POST) {
 
     $topic->setIsClosed($isClosed);
     
-    $validator = new TopicValidator($topic, $isAdminForm);
+    $validator = new TopicValidator($topic);
     if ($validator->isValid()) {
-        $user = new User();
-        $user->setId(AuthUser::getId());
-        
-        $topic->setUser($user);
-        $topicRepository = new TopicRepository();
         $topicRepository->save($topic);
         
         FlashMessage::add("Formularz został zapisany");
         header("Location: " . $baseUrl . "post/list.php?sectionId=" . $sectionId . "&topicId=" . $topic->getId());
-        die;
+        die();
     } else {
         $errors = array_merge($errors, $validator->getErrors());
     }

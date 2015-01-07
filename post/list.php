@@ -25,7 +25,7 @@ foreach ($posts as $post) {
     $postsData[] = [
         "post" => $post,
         "canBeEdit" => $postAssertion->assertEditPost($post),
-        "canBeDelete" => $postAssertion->assertDeletePost($post, false)
+        "canBeDelete" => $postAssertion->assertDeletePost()
     ];
 }
 $messages = FlashMessage::get();
@@ -62,7 +62,7 @@ include '/../library/Layout/Header.php';
                             <?php } ?>
                                 
                             <?php if ($postData["canBeDelete"]) { ?>
-                                <a href="<?php echo "post/remove.php?sectionId=" . $topic->getSection()->getId() . "&topicId=" . $this->topic->getId() . "&postId=" . $post->getId() . "&token=" . AuthUser::getToken() ?>">USUŃ</a>
+                                <a href="<?php echo "post/remove.php?sectionId=" . $topic->getSection()->getId() . "&topicId=" . $topic->getId() . "&postId=" . $post->getId() . "&token=" . AuthUser::getToken() ?>">USUŃ</a>
                             <?php } ?>
                         </p>
                     </div>

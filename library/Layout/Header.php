@@ -34,7 +34,7 @@
                         </li>
                     <?php } ?>
                         
-                    <?php if ($guard->isAccessGranted("ROLE_ADD_TOPIC") && isset($section) && !$section->isClosed()) { ?>
+                    <?php if ($guard->isAccessGranted("ROLE_ADD_TOPIC") && isset($section) && $section->getId() && !$section->isClosed()) { ?>
                         <li style="float: right">
                             <a <?php echo ($menu === "topic-add")? 'class="current' : ""; ?> href="<?php  echo "topic/add.php?sectionId=" . $section->getId() ?>">+ temat</a> 
                         </li>
@@ -42,7 +42,7 @@
                         
                     <?php  if ($guard->isAccessGranted("ROLE_ADD_POST") && isset($topic) && !$topic->isClosed() && !$topic->getSection()->isClosed()) { ?>
                         <li style="float: right">
-                            <a <?php echo ($menu === "post-add")? 'class="current' : ""; ?> href="<?php echo "post/add.php?sectionId=" . $section->getId() . "&topicId=" . $topic->getId() ?>">+ post</a> 
+                            <a <?php echo ($menu === "post-add")? 'class="current' : ""; ?> href="<?php echo "post/add.php?sectionId=" . $topic->getSection()->getId() . "&topicId=" . $topic->getId() ?>">+ post</a> 
                         </li>
                     <?php } ?> 
                 </ul>   	

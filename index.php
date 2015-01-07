@@ -27,7 +27,7 @@ include 'library/Layout/Header.php';
                                         <span class="date">Tematów: <?php echo $section->getAmountTopics(); ?></span>
                                     </div>
                                     <p><?php echo $section->getDescription(); ?></p>
-                                    <?php if ($section->getLastTopic()) { ?>
+                                    <?php if ($section->getLastTopic() && $section->getLastPost()) { ?>
                                         <p>
                                             Ostatni post w: <?php echo $section->getLastTopic()->getName() ?>
                                             przez: <?php echo $section->getLastPost()->getUsername() ?>

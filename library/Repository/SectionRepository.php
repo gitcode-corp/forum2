@@ -19,7 +19,7 @@ class SectionRepository extends Repository
         $sql .= "LEFT JOIN topics t on t.id = s.last_topic_id ";
         $sql .= "LEFT JOIN posts p on p.id = t.last_post_id ";
         $sql .= "LEFT JOIN users u on u.id = p.user_id ";
-        
+
         $rows = $this->fetchAll($sql);
         
         $collection = array();
@@ -45,7 +45,7 @@ class SectionRepository extends Repository
                
                 $post = new Post();
                 $post->setId($row['p_id']);
-                $post->setCreatedOn($row['p_created_on']);
+                $post->setCreatedOn(new \DateTime($row['p_created_on']));
                 $post->setUser($user);
                 
                 $topic->setLastPost($post);
@@ -60,9 +60,11 @@ class SectionRepository extends Repository
     public function findById($sectionId)
     {
         $sql = "SELECT s.id AS s_id, s.name AS s_name, s.description AS s_description, s.amount_topics AS s_amount_topics, s.is_closed AS s_is_closed, s.created_on AS s_created_on, ";
-        $sql .= "u.id AS u_id, u.username AS u_username, u.email AS u_email, u.amount_posts AS u_amount_posts ";
+        $sql .= "u.id AS u_id, u.username AS u_username, u.email AS u_email, u.amount_posts AS u_amount_posts, ";
+        $sql .= "t.id AS t_id, t.name AS t_name ";
         $sql .= "FROM sections s ";
         $sql .= "INNER JOIN users u on s.user_id = u.id ";
+        $sql .= "LEFT JOIN topics t on t.id = s.last_topic_id ";
         $sql .= "WHERE s.id = " . $this->escapeString($sectionId);
 
         $row = $this->fetchOne($sql);
@@ -87,6 +89,14 @@ class SectionRepository extends Repository
         $section->setIsClosed($isClosed);
         $section->setCreatedOn(new \DateTime($row['s_created_on']));
         $section->setUser($user);
+        
+        if ($row['t_id']) {
+            $topic = new Topic();
+            $topic->setId($row['t_id']);
+            $topic->setName($row['t_name']);
+
+            $section->setLastTopic($topic);
+        }
         
         return $section;
     }
@@ -121,11 +131,18 @@ class SectionRepository extends Repository
     
     private function insert(Section $section)
     {
-        $sql = "INSERT INTO sections (`name`, `description`, `user_id`) ";
+        if ($section->isClosed()) {
+            $isClosed = 1;
+        } else {
+            $isClosed = 0;
+        }
+        
+        $sql = "INSERT INTO sections (`name`, `description`, `user_id`, `is_closed`) ";
         $sql .= "VALUES(";
         $sql .= "'". $this->escapeString($section->getName()) ."', ";
         $sql .= "'". $this->escapeString($section->getDescription()) ."', ";
-        $sql .= $this->escapeString($section->getUser()->getId()) ." ";
+        $sql .= $this->escapeString($section->getUser()->getId()) .", ";
+        $sql .= $this->escapeString($isClosed) ." ";
         $sql .= ")";
         
         $id = $this->_insert($sql);
@@ -151,18 +168,23 @@ class SectionRepository extends Repository
         return $this->_update($sql);
     }
     
-    public function updateAmountTopic($sectionId, $increase = true)
+    public function updateAmountTopic($sectionId, $lastTopicId, $increase = true)
     {
         $sql = "UPDATE sections SET ";
         
         if ($increase) {
-            $sql .= "amount_topics = amount_topics+1 ";
+            $sql .= "amount_topics = amount_topics+1 , last_topic_id = " . $this->escapeString($lastTopicId);
         } else {
             $sql .= "amount_topics = amount_topics-1 ";
+            $section = $this->findById($sectionId);
+            if ($section->getLastTopic() && $lastTopicId === $section->getLastTopic()->getId()) {
+                $sql .= ", last_topic_id = NULL";
+            }
         }
-        
-        $sql .= "WHERE id =" .$this->escapeString($sectionId);
+
+        $sql .= " WHERE id =" .$this->escapeString($sectionId);
         
         return $this->_update($sql);
     }
+    
 }

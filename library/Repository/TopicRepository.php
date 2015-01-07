@@ -12,7 +12,7 @@ class TopicRepository extends Repository
 {
     public function findAllInSection($sectionId)
     {
-        $sql = "SELECT t.id AS t_id, t.name AS t_name, t.amount_posts AS t_amount_posts, t.created_on AS t_created_on, t.is_closed AS t_is_closed ";
+        $sql = "SELECT t.id AS t_id, t.name AS t_name, t.amount_posts AS t_amount_posts, t.created_on AS t_created_on, t.is_closed AS t_is_closed, ";
         $sql .= "s.id AS s_id, s.is_closed AS s_is_closed ";
         $sql .= "FROM topics t ";
         $sql .= "INNER JOIN sections s on s.id = t.section_id ";
@@ -143,24 +143,6 @@ class TopicRepository extends Repository
         
     }
     
-    public function remove(Topic $topic)
-    {
-        if (!$topic->getSection() || !$topic->getSection()->getId()) {
-            throw new \InvalidArgumentException("Cannot remove topic without assigned section");
-        }
-        
-        $postRepository = new PostRepository();
-        $postRepository->removeAllInTopic($topic);
-        
-        $sectionRepository = new SectionRepository();
-        $sectionRepository->updateAmountTopic($topic->getSection()->getId(), false);
-        
-        $sql = "DELETE FROM topics ";
-        $sql .= "WHERE id =" .$this->escapeString($topic->getId());
-        
-        return $this->delete($sql);
-    }
-    
     public function save(Topic $topic)
     {
         if(!$topic->getUser() || !$topic->getUser()->getId()) {
@@ -178,19 +160,25 @@ class TopicRepository extends Repository
     
     private function insert(Topic $topic)
     {
-        $sql = "INSERT INTO topics (`name`, `description`, `user_id`, `section_id`) ";
+        $isClosed = ($topic->isClosed()) ? 1 : 0;
+        $sql = "INSERT INTO topics (`name`, `description`, `user_id`, `section_id`, `is_closed`) ";
         $sql .= "VALUES(";
         $sql .= "'". $this->escapeString($topic->getName()) ."', ";
         $sql .= "'". $this->escapeString($topic->getDescription()) ."', ";
         $sql .= $this->escapeString($topic->getUser()->getId()) .", ";
-        $sql .= $this->escapeString($topic->getSection()->getId()) ." ";
+        $sql .= $this->escapeString($topic->getSection()->getId()) .", ";
+        $sql .= $this->escapeString($isClosed) ." ";
         $sql .= ")";
         
         $id = $this->_insert($sql);
         $topic->setId($id);
         
         $sectionRepository = new SectionRepository();
-        $sectionRepository->updateAmountTopic($topic->getSection()->getId());
+        $sectionRepository->updateAmountTopic($topic->getSection()->getId(), $topic->getId());
+        
+        $section = $topic->getSection();
+        $section->setLastTopic($topic);
+        $sectionRepository->save($section);
         
         return $topic;
     }
@@ -232,8 +220,7 @@ class TopicRepository extends Repository
         $postRepository->removeAllInTopic($topic);
         
         $sectionRepository = new SectionRepository();
-        $sectionRepository->updateAmountTopic($this->topic->getSection()->getId(), true);
-        
+        $sectionRepository->updateAmountTopic($topic->getSection()->getId(), $topic->getId(), false);    
         
         $sql = "DELETE FROM topics ";
         $sql .= "WHERE id =" .$this->escapeString($topic->getId());

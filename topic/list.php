@@ -3,6 +3,7 @@
 include '/../library/CommonClasses.php';
 require_once '/../library/Repository/SectionRepository.php';
 require_once '/../library/Repository/TopicRepository.php';
+require_once '/../library/Assertion/TopicAssertion.php';
 
 $sectionId = isset($_GET["sectionId"]) ? (int) $_GET["sectionId"] : 0;
 $sectionRepository = new SectionRepository();
@@ -14,6 +15,8 @@ if (!$section) {
 
 $topicRepository = new TopicRepository();
 $topics = $topicRepository->findAllInSectionWithLastPost($sectionId);
+
+$topicAssertion = new TopicAssertion();
 
 include '/../library/Layout/Header.php';
 ?>
@@ -45,11 +48,11 @@ include '/../library/Layout/Header.php';
                         <?php } ?>
                             
                         <p style="margin-top: 15px">
-                            <?php if ((!$topic->isClosed() && !$topic->getSection()->isClosed()) && ($guard->isAccessGranted("ROLE_EDIT_ALL_TOPICS") || ($guard->isAccessGranted("ROLE_EDIT_TOPIC")) && $topic->getUser()->getId() == AuthUser::getId())) { ?>
-                                <a href="<?php "topic/edit.php?sectionId=" . $section->getId() . "&topicId=" . $topic->getId() ?>">EDYTUJ</a>
+                            <?php if ($topicAssertion->assertEditTopic($topic)) { ?>
+                                <a href="<?php echo "topic/edit.php?sectionId=" . $section->getId() . "&topicId=" . $topic->getId() ?>">EDYTUJ</a>
                             <?php } ?>
                                 
-                            <?php if ($guard->isAccessGranted("ROLE_DELETE_TOPIC")) { ?>
+                            <?php if ($topicAssertion->assertDeleteTopic()) { ?>
                                 <a href="<?php echo "topic/remove.php?sectionId=" . $section->getId() . "&topicId=" . $topic->getId() . "&token=" . AuthUser::getToken() ?>">USUŃ</a>
                             <?php } ?>
                         </p>
